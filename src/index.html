@@ -5,41 +5,416 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tilting Maze</title>
-    <link rel="icon" href="../images/maze.jpg" />
-    <link rel="stylesheet" href="../css/style.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
     />
     <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <style>
+      /* Custom styles */
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "Inter", sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .main-container {
+        max-width: 1200px;
+        width: 100%;
+        padding: 1rem;
+      }
+
+      .game-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+      }
+
+      .header-compact {
+        text-align: center;
+        margin-bottom: 0.5rem;
+      }
+
+      .game-board {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 1.5rem;
+        width: 100%;
+      }
+
+      .maze-section {
+        flex: 0 0 auto;
+      }
+
+      .controls-section {
+        flex: 1;
+        max-width: 400px;
+        min-width: 300px;
+      }
+
+      .maze-wrapper-compact {
+        background: white;
+        border-radius: 1rem;
+        padding: 1rem;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      }
+
+      .maze-container {
+        background: #f3f4f6;
+        border-radius: 0.5rem;
+        position: relative;
+        transform-style: preserve-3d;
+        perspective: 1000px;
+        transition: transform 0.1s ease-out;
+      }
+
+      /* Compact controls */
+      .control-card {
+        background: white;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+      }
+
+      .joystick-compact {
+        padding: 1.5rem;
+      }
+
+      /* Ukuran maze yang lebih optimal */
+      #maze {
+        width: 400px !important;
+        height: 360px !important;
+      }
+
+      .wall {
+        background-color: #36382e;
+        position: absolute;
+        transform-origin: top center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        z-index: 10;
+      }
+
+      .wall::before,
+      .wall::after {
+        content: "";
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background-color: #36382e;
+        border-radius: 50%;
+      }
+
+      .wall::before {
+        top: -4px;
+        left: 0;
+      }
+
+      .wall::after {
+        bottom: -4px;
+        left: 0;
+      }
+
+      .ball {
+        border-radius: 50%;
+        position: absolute;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        z-index: 20;
+        transition: all 0.1s ease;
+      }
+
+      .black-hole {
+        border-radius: 50%;
+        position: absolute;
+        background: radial-gradient(circle, #000000 0%, #333333 100%);
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
+        z-index: 5;
+      }
+
+      @keyframes successGlow {
+        0%,
+        100% {
+          box-shadow: 0 0 15px rgba(16, 185, 129, 0.6);
+        }
+        50% {
+          box-shadow: 0 0 25px rgba(16, 185, 129, 0.9);
+        }
+      }
+
+      @keyframes joystickGlow {
+        0%,
+        100% {
+          box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+        }
+        50% {
+          box-shadow: 0 0 15px rgba(239, 68, 68, 0.8);
+        }
+      }
+
+      .success-glow {
+        animation: successGlow 2s ease-in-out infinite;
+      }
+
+      .joystick-head-glow {
+        animation: joystickGlow 1.5s ease-in-out infinite;
+      }
+
+      .pulse {
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      /* Responsive */
+      @media (max-width: 1024px) {
+        .game-board {
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .controls-section {
+          max-width: 500px;
+          width: 100%;
+        }
+
+        #maze {
+          width: 100% !important;
+          max-width: 400px;
+          height: 360px !important;
+        }
+      }
+
+      @media (max-width: 480px) {
+        #maze {
+          width: 100% !important;
+          height: 300px !important;
+        }
+
+        .main-container {
+          padding: 0.5rem;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="center">
-      <div id="game">
-        <div id="maze">
-          <div id="end"></div>
+    <div class="main-container">
+      <div class="game-content">
+        <!-- Header Compact -->
+        <div class="header-compact">
+          <h1 class="text-3xl md:text-4xl font-bold text-white mb-1">
+            Tilting Maze
+          </h1>
+          <p class="text-white/80 text-sm">
+            Guide all balls to the center target
+          </p>
         </div>
-        <div id="joystick">
-          <div class="joystick-arrow"></div>
-          <div class="joystick-arrow"></div>
-          <div class="joystick-arrow"></div>
-          <div class="joystick-arrow"></div>
-          <div id="joystick-head"></div>
-        </div>
-        <div id="note">
-          <h3><b>Instructions:</b></h3>
-          Click the joystick to start!
-          <p>Move every ball to the center. Ready for hard mode? Press H</p>
-        </div>
-        <button id="restart-btn">Restart</button>
-      </div>
-    </div>
 
-    <div id="youtube-card">
-      How to simulate ball movement in a maze with JavaScript
+        <div class="game-board">
+          <!-- Maze Section -->
+          <div class="maze-section">
+            <div class="maze-wrapper-compact">
+              <div id="maze" class="maze-container mx-auto">
+                <!-- Target akan ditambahkan via JavaScript -->
+              </div>
+
+              <!-- Game Stats Compact -->
+              <div class="flex justify-between items-center mt-3 px-1">
+                <div class="flex items-center space-x-3">
+                  <div class="flex items-center space-x-1">
+                    <div class="w-2 h-2 bg-red-500 rounded-full pulse"></div>
+                    <span class="text-xs font-medium text-gray-700"
+                      >Balls: <span id="ball-count">4</span>/4</span
+                    >
+                  </div>
+                  <div class="flex items-center space-x-1">
+                    <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span class="text-xs font-medium text-gray-700"
+                      >Completed: <span id="completed-count">0</span></span
+                    >
+                  </div>
+                </div>
+                <div
+                  id="level-indicator"
+                  class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium"
+                >
+                  Mode: <span id="mode-text">Easy</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Controls Section -->
+          <div class="controls-section">
+            <!-- Instructions Compact -->
+            <div class="control-card">
+              <div class="flex items-center mb-3">
+                <div
+                  class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mr-2"
+                >
+                  <i class="fas fa-info text-white text-xs"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800">How to Play</h3>
+              </div>
+              <div id="note" class="space-y-2">
+                <div class="flex items-start space-x-2">
+                  <div
+                    class="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0"
+                  >
+                    <i class="fas fa-mouse text-white text-xs"></i>
+                  </div>
+                  <p class="text-gray-700 text-sm">
+                    Drag the joystick to tilt the maze
+                  </p>
+                </div>
+                <div class="flex items-start space-x-2">
+                  <div
+                    class="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0"
+                  >
+                    <i class="fas fa-bullseye text-white text-xs"></i>
+                  </div>
+                  <p class="text-gray-700 text-sm">
+                    Guide balls to the center target
+                  </p>
+                </div>
+                <div class="flex items-start space-x-2">
+                  <div
+                    class="w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0"
+                  >
+                    <i class="fas fa-shield-alt text-white text-xs"></i>
+                  </div>
+                  <p class="text-gray-700 text-sm">
+                    Press
+                    <kbd
+                      class="px-1.5 py-0.5 bg-gray-200 rounded text-xs font-mono"
+                      >H</kbd
+                    >
+                    for Hard Mode
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Joystick Compact -->
+            <div class="control-card bg-gray-900 joystick-compact">
+              <div class="text-center mb-4">
+                <h4 class="text-white font-semibold text-base mb-1">
+                  Tilt Control
+                </h4>
+                <p class="text-white/70 text-xs">Drag to control the maze</p>
+              </div>
+
+              <div class="relative flex items-center justify-center">
+                <div class="relative bg-gray-800 rounded-full p-6 shadow-inner">
+                  <div
+                    class="joystick-arrow absolute -top-3 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-6 border-r-6 border-b-6 border-transparent border-b-gray-600"
+                  ></div>
+                  <div
+                    class="joystick-arrow absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-6 border-r-6 border-t-6 border-transparent border-t-gray-600"
+                  ></div>
+                  <div
+                    class="joystick-arrow absolute -left-3 top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-6 border-b-6 border-r-6 border-transparent border-r-gray-600"
+                  ></div>
+                  <div
+                    class="joystick-arrow absolute -right-3 top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-6 border-b-6 border-l-6 border-transparent border-l-gray-600"
+                  ></div>
+
+                  <div
+                    id="joystick-head"
+                    class="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-full shadow-lg cursor-grab transition-all duration-200 hover:from-red-400 hover:to-red-500 flex items-center justify-center joystick-head-glow relative"
+                    style="left: 0px; top: 0px"
+                  >
+                    <i class="fas fa-arrows-alt text-white text-xs"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons Compact -->
+            <div class="control-card">
+              <div class="flex space-x-3 w-full">
+                <button
+                  id="restart-btn"
+                  class="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition-all duration-200 flex items-center justify-center space-x-2 text-sm"
+                >
+                  <i class="fas fa-redo text-xs"></i>
+                  <span>Restart</span>
+                </button>
+                <button
+                  id="mode-toggle"
+                  class="flex-1 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition-all duration-200 flex items-center justify-center space-x-2 text-sm"
+                >
+                  <i class="fas fa-shield-alt text-xs"></i>
+                  <span>Hard Mode</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Quick Controls Compact -->
+            <div class="control-card">
+              <h4 class="font-semibold text-gray-800 mb-2 text-sm">
+                Quick Controls
+              </h4>
+              <div class="grid grid-cols-2 gap-2">
+                <div class="text-center p-2 bg-gray-100 rounded">
+                  <kbd
+                    class="text-xs font-mono bg-white px-2 py-1 rounded shadow"
+                    >Space</kbd
+                  >
+                  <p class="text-xs text-gray-600 mt-1">Restart</p>
+                </div>
+                <div class="text-center p-2 bg-gray-100 rounded">
+                  <kbd
+                    class="text-xs font-mono bg-white px-2 py-1 rounded shadow"
+                    >H</kbd
+                  >
+                  <p class="text-xs text-gray-600 mt-1">Hard Mode</p>
+                </div>
+                <div class="text-center p-2 bg-gray-100 rounded">
+                  <kbd
+                    class="text-xs font-mono bg-white px-2 py-1 rounded shadow"
+                    >E</kbd
+                  >
+                  <p class="text-xs text-gray-600 mt-1">Easy Mode</p>
+                </div>
+                <div class="text-center p-2 bg-gray-100 rounded">
+                  <kbd
+                    class="text-xs font-mono bg-white px-2 py-1 rounded shadow"
+                    >R</kbd
+                  >
+                  <p class="text-xs text-gray-600 mt-1">Reset View</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Compact -->
+        <div class="text-center mt-4">
+          <p class="text-white/60 text-xs">
+            Tilting Maze Game - Built with HTML, CSS & JavaScript
+          </p>
+        </div>
+      </div>
     </div>
 
     <script src="../js/script.js"></script>
